@@ -28,7 +28,7 @@ func getPrice(c *colly.Collector, url string) Product {
 	c.OnHTML("#main", func(e *colly.HTMLElement) {
 		item.Name = e.ChildText(".product-header-title")
 		item.ImageURL = e.ChildAttr(".product-image", "src")
-		price := strings.Join(strings.Fields(e.ChildText(".price-tag-price__euros")), "")
+		price := strings.Join(strings.Fields(e.ChildText(".price-tag-content__price-tag-price--current")), "")
 		item.Price = price
 	})
 	c.Visit(url)

@@ -27,3 +27,10 @@ functions:
           path: addproduct
           method: post
           cors: true
+  get_products:
+    handler: bin/getproducts
+    events:
+      - http:
+          path: getproducts
+          method: get
+          cors: true
