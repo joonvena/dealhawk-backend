@@ -19,3 +19,11 @@ functions:
       - http:
           path: productinfo
           method: post
+          cors: true
+  add_product:
+    handler: bin/addproduct
+    events:
+      - http:
+          path: addproduct
+          method: post
+          cors: true

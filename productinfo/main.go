@@ -11,10 +11,9 @@ import (
 )
 
 type Product struct {
-	Name       string `json:"name"`
-	ImageURL   string `json:"imageURL"`
-	Price      string `json:"price"`
-	ProductURL string `json:"productURL"`
+	Name     string `json:"name"`
+	ImageURL string `json:"imageURL"`
+	Price    string `json:"price"`
 }
 
 type URL struct {
@@ -52,8 +51,10 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 
 	if len(resp.Name) > 0 {
 		body, _ := json.Marshal(resp)
-
-		return events.APIGatewayProxyResponse{Body: string(body), StatusCode: 200}, nil
+		headers := map[string]string{
+			"Access-Control-Allow-Origin": "*",
+		}
+		return events.APIGatewayProxyResponse{Body: string(body), Headers: headers, StatusCode: 200}, nil
 	} else {
 		return events.APIGatewayProxyResponse{Body: "Product not found", StatusCode: 404}, nil
 	}
