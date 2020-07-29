@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"os"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -30,6 +31,7 @@ type Response events.APIGatewayProxyResponse
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		Config:            aws.Config{Endpoint: aws.String("http://" + os.Getenv("LOCALSTACK_HOSTNAME") + ":4569")},
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 

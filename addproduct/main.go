@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -91,6 +92,7 @@ type Response events.APIGatewayProxyResponse
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		Config:            aws.Config{Endpoint: aws.String("http://" + os.Getenv("LOCALSTACK_HOSTNAME") + ":4569")},
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 

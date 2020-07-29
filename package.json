@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/joonvena/dealhawk-backend#readme",
   "devDependencies": {
-    "serverless-iam-roles-per-function": "^2.0.2"
+    "serverless-iam-roles-per-function": "^2.0.2",
+    "serverless-localstack": "^0.4.24"
   }
 }

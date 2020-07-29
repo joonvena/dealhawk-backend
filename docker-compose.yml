@@ -1,0 +1,17 @@
+version: '2.1'
+services:
+  localstack:
+    image: localstack/localstack
+    ports:
+      - "4566-4592:4566-4592"
+      - "9000:9000"
+    environment:
+      - SERVICES=s3,cloudformation,lambda,dynamodb,iam,sts,apigateway
+      - DEBUG=true
+      - DEFAULT_REGION=us-east-1
+      - LAMBDA_EXECUTOR=docker-reuse
+      - PORT_WEB_UI=9000
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - "${TMPDIR:-/tmp/localstack}:/tmp/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
