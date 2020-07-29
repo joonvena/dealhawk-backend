@@ -1,0 +1,23 @@
+{
+  "name": "myservice",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joonvena/dealhawk-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/joonvena/dealhawk-backend/issues"
+  },
+  "homepage": "https://github.com/joonvena/dealhawk-backend#readme",
+  "devDependencies": {
+    "serverless-iam-roles-per-function": "^2.0.2"
+  }
+}
