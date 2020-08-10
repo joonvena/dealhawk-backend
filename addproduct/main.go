@@ -3,75 +3,34 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+
+	"github.com/aws/aws-sdk-go/aws/session"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+
+	uuid "github.com/satori/go.uuid"
 )
 
 type Product struct {
+	ProductID  string `json:"productId"`
 	Name       string `json:"name"`
 	ImageURL   string `json:"imageURL"`
 	Price      string `json:"price"`
+	OldPrice   string `json:"old_price,omitempty"`
 	ProductURL string `json:"productURL,omitempty"`
 }
 
 type DB struct {
 	UserID   string    `json:"userId"`
 	Products []Product `json:"products"`
-}
-
-func AddItem(svc *dynamodb.DynamoDB, name string, imageURL string, price string, productURL string) {
-
-	av, err := dynamodbattribute.MarshalMap(Product{
-		Name:       name,
-		ImageURL:   imageURL,
-		Price:      price,
-		ProductURL: productURL,
-	})
-
-	fmt.Println(av)
-
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
-
-	avx := &dynamodb.AttributeValue{
-		M: av,
-	}
-
-	var r []*dynamodb.AttributeValue
-	r = append(r, avx)
-
-	input := &dynamodb.UpdateItemInput{
-		Key: map[string]*dynamodb.AttributeValue{
-			"userId": {
-				S: aws.String("fewkfok435ok43pogskg0cml39639"),
-			},
-		},
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":gid": {
-				L: r,
-			},
-			":empty_list": {
-				L: []*dynamodb.AttributeValue{},
-			},
-		},
-		TableName:        aws.String("product-scraper"),
-		ReturnValues:     aws.String("UPDATED_NEW"),
-		UpdateExpression: aws.String("SET products = list_append(if_not_exists(products, :empty_list), :gid)"),
-	}
-	_, err = svc.UpdateItem(input)
-	if err != nil {
-		fmt.Println(err.Error())
-		return
-	}
 }
 
 func checkIfProductExists(product string, products DB) bool {
@@ -92,47 +51,60 @@ type Response events.APIGatewayProxyResponse
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		Config:            aws.Config{Endpoint: aws.String("http://" + os.Getenv("LOCALSTACK_HOSTNAME") + ":4569")},
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 
-	// Create DynamoDB client
+	u2 := uuid.NewV4()
+
+	req := &Product{}
+	req.ProductID = u2.String()
+
+	json.Unmarshal([]byte(request.Body), req)
+
+	// Create Aurora Serverless Client
 	svc := dynamodb.New(sess)
 
-	result, err := svc.GetItem(&dynamodb.GetItemInput{
-		TableName: aws.String("product-scraper"),
-		Key: map[string]*dynamodb.AttributeValue{
-			"userId": {
-				S: aws.String("fewkfok435ok43pogskg0cml39639"),
-			},
-		},
-	})
+	prod, err := dynamodbattribute.MarshalMap(req)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: 500}, nil
 	}
 
-	req := &Product{}
-	json.Unmarshal([]byte(request.Body), req)
+	log.Println(req.Name)
 
-	test := DB{}
-	err = dynamodbattribute.UnmarshalMap(result.Item, &test)
-
-	exists := checkIfProductExists(req.Name, test)
-
-	if !exists {
-		fmt.Println("Item does not exists. Moving to adding item...")
-		AddItem(svc, req.Name, req.ImageURL, req.Price, req.ProductURL)
-	}
+	result, err := svc.GetItem(&dynamodb.GetItemInput{
+		TableName: aws.String(os.Getenv("products_table")),
+		Key: map[string]*dynamodb.AttributeValue{
+			"name": {
+				S: aws.String(req.Name),
+			},
+		},
+	},
+	)
 
 	if err != nil {
-		panic(fmt.Sprintf("Failed to unmarshal Record %v", err))
+		log.Println(err.Error())
+	}
+
+	log.Println(result.Item)
+
+	if result.Item == nil {
+		input := &dynamodb.PutItemInput{
+			Item:      prod,
+			TableName: aws.String(os.Getenv("products_table")),
+		}
+
+		_, err = svc.PutItem(input)
+		if err != nil {
+			log.Println(err.Error())
+			return events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: 500}, nil
+		}
 	}
 
 	headers := map[string]string{
 		"Access-Control-Allow-Origin": "*",
 	}
-	return events.APIGatewayProxyResponse{Body: "hello", Headers: headers, StatusCode: 200}, nil
+	return events.APIGatewayProxyResponse{Body: "Product added", Headers: headers, StatusCode: 201}, nil
 
 }
 

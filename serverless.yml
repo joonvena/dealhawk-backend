@@ -1,25 +1,15 @@
-service: myservice
+service: dh-backend
 frameworkVersion: '>=1.28.0 <2.0.0'
 
 provider:
   name: aws
   runtime: go1.x
-  region: us-east-1
-
-plugins:
-  - serverless-iam-roles-per-function
-  - serverless-localstack
-
-custom:
-  localstack:
-    stages:
-      - local
-    host: http://localhost
-    lambda:
-      mountCode: false
-    docker:
-      sudo: false
-
+  region: ${opt:region, 'eu-west-1'}
+  environment:
+    products_table: ${opt:products_table}
+    user_table: ${opt:user_table}
+  apiKeys:
+    - dh_backend_${opt:stage}
 
 package:
   exclude:
@@ -30,37 +20,55 @@ package:
 functions:
   get_product_info:
     handler: bin/productinfo
-    iamRoleStatements:
-      - Effect: "Allow"
-        Action:
-          - dynamodb.GetItem
-        Resource: "arn.aws.dynamodb:${self:provider.region}:*table/${opt:db_name}"
     events:
       - http:
           path: productinfo
           method: post
           cors: true
+          private: true
   add_product:
     handler: bin/addproduct
     iamRoleStatements:
       - Effect: "Allow"
         Action:
-          - dynamodb.PutItem
-        Resource: "arn.aws.dynamodb:${self:provider.region}:*table/${opt:db_name}"
+          - dynamodb:Scan
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${opt:products_table}"
+      - Effect: "Allow"        
+        Action:
+          - dynamodb:PutItem 
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${opt:products_table}"
     events:
       - http:
           path: addproduct
           method: post
           cors: true
+          private: true
   get_products:
     handler: bin/getproducts
     iamRoleStatements:
       - Effect: "Allow"
         Action:
-          - dynamodb.GetItem
-        Resource: "arn.aws.dynamodb:${self:provider.region}:*table/${opt:db_name}"
+          - dynamodb:Scan
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${opt:products_table}"
     events:
       - http:
           path: getproducts
           method: get
           cors: true
+          private: true
+  delete_product:
+    handler: bin/deleteproduct
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - dynamodb:DeleteItem
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${opt:products_table}"
+    events:
+      - http:
+          path: deleteproduct
+          method: delete
+          cors: true
+          private: true
+
+plugins:
+  - serverless-iam-roles-per-function

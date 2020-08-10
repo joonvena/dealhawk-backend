@@ -172,6 +172,14 @@
   revision = "3af4cd4741ca4f3eb0c407c034571a6fb0ea529c"
 
 [[projects]]
+  digest = "1:7f569d906bdd20d906b606415b7d794f798f91a62fcfb6a4daa6d50690fb7a3f"
+  name = "github.com/satori/go.uuid"
+  packages = ["."]
+  pruneopts = ""
+  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
+  version = "v1.2.0"
+
+[[projects]]
   digest = "1:ad4550aa21146baad6f8a8303657e73c83d6c306e1ea39f121ce2dcf7f4549a2"
   name = "github.com/temoto/robotstxt"
   packages = ["."]
@@ -282,6 +290,7 @@
     "github.com/aws/aws-sdk-go/service/dynamodb",
     "github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute",
     "github.com/gocolly/colly",
+    "github.com/satori/go.uuid",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

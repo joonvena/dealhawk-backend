@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -13,10 +14,12 @@ import (
 )
 
 type Product struct {
+	ProductID  string `json:"productId"`
 	Name       string `json:"name"`
 	ImageURL   string `json:"imageURL"`
 	Price      string `json:"price"`
-	ProductURL string `json:"productURL,omitempty"`
+	OldPrice   string `json:"old_price,omitempty"`
+	ProductURL string `json:"productURL"`
 }
 
 type DB struct {
@@ -31,33 +34,24 @@ type Response events.APIGatewayProxyResponse
 func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		Config:            aws.Config{Endpoint: aws.String("http://" + os.Getenv("LOCALSTACK_HOSTNAME") + ":4569")},
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 
 	// Create DynamoDB client
 	svc := dynamodb.New(sess)
 
-	result, err := svc.GetItem(&dynamodb.GetItemInput{
-		TableName: aws.String("product-scraper"),
-		Key: map[string]*dynamodb.AttributeValue{
-			"userId": {
-				S: aws.String("fewkfok435ok43pogskg0cml39639"),
-			},
-		},
+	result, err := svc.Scan(&dynamodb.ScanInput{
+		TableName: aws.String(os.Getenv("products_table")),
 	})
+
 	if err != nil {
 		return events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: 500}, nil
 	}
 
-	product := DB{}
+	var product []Product
 
-	if err := dynamodbattribute.UnmarshalMap(result.Item, &product); err != nil {
-		return events.APIGatewayProxyResponse{Body: err.Error(), StatusCode: 500}, nil
-	}
-
-	if len(product.UserID) == 0 {
-		return events.APIGatewayProxyResponse{Body: "User not found", StatusCode: 404}, nil
+	if err := dynamodbattribute.UnmarshalListOfMaps(result.Items, &product); err != nil {
+		fmt.Println(err.Error())
 	}
 
 	body, _ := json.Marshal(product)

@@ -2,6 +2,7 @@ version: '2.1'
 services:
   localstack:
     image: localstack/localstack
+    container_name: localstack
     ports:
       - "4566-4592:4566-4592"
       - "9000:9000"
